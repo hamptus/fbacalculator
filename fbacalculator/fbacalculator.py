@@ -98,7 +98,7 @@ def calculate_fees(length, width, height, weight, is_apparel=False, is_media=Fal
     else:
         if standard_oversize == "Standard":
             if weight <=1:
-                outbound = weight + 0.25
+                outbound = weight + Decimal('0.25')
             else:
                 outbound = max(weight, dimensional_weight) + Decimal('0.25')
         else:
