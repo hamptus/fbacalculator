@@ -45,7 +45,7 @@ def get_girth_and_length(length, width, height):
     gl = max(length, width, height) + (median([length, width, height]) * 2) + (min(length, width, height) * 2)
     return Decimal(gl).quantize(Decimal("0.1"))
 
-def calculate_fees(length, width, height, weight, is_apparel=False, is_media=False, is_pro=True):
+def calculate_fees(length, width, height, weight, sales_price=Decimal("0"), is_apparel=False, is_media=False, is_pro=True):
     """ Calculate the FBA fees for the given variables """
     dimensional_weight = get_dimensional_weight(length, width, height)
     girth_length = get_girth_and_length(length, width, height)
@@ -118,6 +118,11 @@ def calculate_fees(length, width, height, weight, is_apparel=False, is_media=Fal
     thirty_day = get_30_day(standard_oversize, cubic_foot)
 
     costs = normalize(pick_pack) + normalize(weight_handling) + normalize(thirty_day) + normalize(order_handling)
+
+    # Add the referral fees to fees if we know how much we plan to sell the product for
+    if sales_price:
+        referral_fee = sales_price * Decimal('0.15')
+        costs += referral_fee.quantize(TWO_PLACES)
 
     if is_apparel:
         costs += 0.40
