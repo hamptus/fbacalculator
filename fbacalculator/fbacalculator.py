@@ -92,7 +92,6 @@ def get_weight_handling(size_tier, outbound, is_media=False):
     return Decimal('1.59') + (outbound - 2) * Decimal('0.39')
 
 
-
 def calculate_fees(length, width, height, weight, sales_price=Decimal("0"),
                    is_apparel=False, is_media=False, is_pro=True):
     """ Calculate the FBA fees for the given variables """
