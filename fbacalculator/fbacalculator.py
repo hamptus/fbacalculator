@@ -13,40 +13,93 @@ PICK_PACK = {
     "SPL_OVER": Decimal("10.34"),
 }
 
+
 def get_30_day(standard_oversize, cubic_foot):
     if standard_oversize == "Standard":
         return Decimal('0.5525') * normalize(cubic_foot)
-    else:
-        return Decimal('0.4325') * normalize(cubic_foot)
+    return Decimal('0.4325') * normalize(cubic_foot)
+
 
 def get_standard_or_oversize(length, width, height, weight):
     """ Determine if object is standard size or oversized """
-    if any(
-        [
-            (weight > 20),
+    if any([(weight > 20),
             (max(length, width, height) > 18),
             (min(length, width, height) > 8),
-            (median([length, width, height]) > 14)
-        ]
-    ):
+            (median([length, width, height]) > 14)]):
         return "Oversize"
     return "Standard"
+
 
 def normalize(data):
     if type(data) != Decimal:
         return Decimal(str(data))
     return data
 
+
 def get_dimensional_weight(length, width, height):
     dw = (height * length * width) / Decimal('166.0')
     return Decimal(dw).quantize(TWO_PLACES)
 
+
 def get_girth_and_length(length, width, height):
-    gl = max(length, width, height) + (median([length, width, height]) * 2) + (min(length, width, height) * 2)
+    gl = max(length, width, height) + \
+        (median([length, width, height]) * 2) + \
+        (min(length, width, height) * 2)
+
     return Decimal(gl).quantize(Decimal("0.1"))
 
-def calculate_fees(length, width, height, weight, sales_price=Decimal("0"), is_apparel=False, is_media=False, is_pro=True):
+
+def get_cubic_foot(length, width, height):
+    return (length * width * height) / Decimal('1728.0')
+
+
+def get_weight_handling(size_tier, outbound, is_media=False):
+    outbound = normalize(outbound).quantize(Decimal("0"), rounding=ROUND_UP)
+
+    if size_tier == "SML_STND":
+        return Decimal('0.5')
+
+    if size_tier == "LRG_STND":
+        if outbound <= 1:
+            return Decimal('0.63')
+
+        if is_media:
+            if outbound <= 2:
+                return Decimal('0.88')
+            return Decimal('0.88') + (outbound - 2) * Decimal('0.41')
+
+        if outbound <= 2:
+            return Decimal('1.59')
+        return Decimal('1.59') + (outbound - 2) * Decimal('0.39')
+
+    if size_tier == "SPL_OVER":
+        if outbound <= 90:
+            return Decimal("124.58")
+        return Decimal('124.58') + (outbound - 90) * Decimal('0.92')
+
+    if size_tier == "LRG_OVER":
+        if outbound <= 90:
+            return Decimal("63.09")
+        return Decimal('63.09') + (outbound - 90) * Decimal('0.92')
+
+    if size_tier == "MED_OVER":
+        if outbound <= 2:
+            return Decimal("2.23")
+        return Decimal('2.23') + (outbound - 2) * Decimal('0.39')
+
+    if outbound <= 2:
+        return Decimal('1.59')
+    return Decimal('1.59') + (outbound - 2) * Decimal('0.39')
+
+
+
+def calculate_fees(length, width, height, weight, sales_price=Decimal("0"),
+                   is_apparel=False, is_media=False, is_pro=True):
     """ Calculate the FBA fees for the given variables """
+    # Make sure the values are decimals
+    length, width = normalize(length), normalize(width)
+    height, weight = normalize(height), normalize(weight)
+
     dimensional_weight = get_dimensional_weight(length, width, height)
     girth_length = get_girth_and_length(length, width, height)
 
@@ -74,7 +127,7 @@ def calculate_fees(length, width, height, weight, sales_price=Decimal("0"), is_a
     else:
         if any(
             [
-                (girth_length>165),
+                (girth_length > 165),
                 (weight > 150),
                 (max(length, width, height) > 108),
              ]
@@ -94,10 +147,10 @@ def calculate_fees(length, width, height, weight, sales_price=Decimal("0"), is_a
             size_tier = "SML_OVER"
 
     if is_media:
-        outbound = weight + 0.125
+        outbound = weight + Decimal("0.125")
     else:
         if standard_oversize == "Standard":
-            if weight <=1:
+            if weight <= 1:
                 outbound = weight + Decimal('0.25')
             else:
                 outbound = max(weight, dimensional_weight) + Decimal('0.25')
@@ -113,13 +166,17 @@ def calculate_fees(length, width, height, weight, sales_price=Decimal("0"), is_a
         order_handling = 1
     pick_pack = PICK_PACK.get(standard_oversize, PICK_PACK.get(size_tier))
 
-    weight_handling = get_weight_handling(size_tier, outbound, is_media).quantize(TWO_PLACES)
+    weight_handling = get_weight_handling(
+        size_tier, outbound, is_media).quantize(TWO_PLACES)
 
     thirty_day = get_30_day(standard_oversize, cubic_foot)
 
-    costs = normalize(pick_pack) + normalize(weight_handling) + normalize(thirty_day) + normalize(order_handling)
+    costs = normalize(pick_pack) + \
+        normalize(weight_handling) + \
+        normalize(thirty_day) + \
+        normalize(order_handling)
 
-    # Add the referral fees to fees if we know how much we plan to sell the product for
+    # Add the referral fees if we know how much we plan to sell the product for
     if sales_price:
         referral_fee = sales_price * Decimal('0.15')
         costs += referral_fee.quantize(TWO_PLACES)
@@ -130,49 +187,3 @@ def calculate_fees(length, width, height, weight, sales_price=Decimal("0"), is_a
     if not is_pro:
         costs += 1.0
     return costs.quantize(TWO_PLACES)
-
-def get_cubic_foot(length, width, height):
-    return (length * width * height) / Decimal('1728.0')
-
-def get_weight_handling(size_tier, outbound, is_media=False):
-    outbound = normalize(outbound)
-
-    if size_tier == "SML_STND":
-        return Decimal('0.5')
-    if size_tier == "LRG_STND":
-        if outbound  <= 1:
-            return Decimal('0.63')
-        if is_media:
-            if outbound <= 2:
-                return Decimal('0.88')
-            else:
-                return Decimal('0.88') + (outbound.quantize(Decimal("0"), rounding=ROUND_UP) - 2) * Decimal('0.41')
-        else:
-            if outbound <= 2:
-                return Decimal('1.59')
-            else:
-                return Decimal('1.59') + (outbound.quantize(Decimal("0"), rounding=ROUND_UP) - 2) * Decimal('0.39')
-
-    if size_tier == "SPL_OVER":
-        if outbound <= 90:
-            return Decimal("124.58")
-        else:
-            return Decimal('124.58') + (outbound.quantize(Decimal("0"), rounding=ROUND_UP) - 90) * Decimal('0.92')
-
-    if size_tier == "LRG_OVER":
-        if outbound <= 90:
-            return Decimal("63.09")
-        else:
-            return Decimal('63.09') + (outbound.quantize(Decimal("0"), rounding=ROUND_UP) - 90) * Decimal('0.92')
-
-    if size_tier == "MED_OVER":
-        if outbound <= 2:
-            return Decimal("2.23")
-        else:
-            return Decimal('2.23') + (outbound.quantize(Decimal("0"), rounding=ROUND_UP) - 2) * Decimal('0.39')
-
-    if outbound <=2:
-        return 1.59
-
-    else:
-        return Decimal('1.59') + (outbound.quantize(Decimal("0"), rounding=ROUND_UP) - 2) * Decimal('0.39')
