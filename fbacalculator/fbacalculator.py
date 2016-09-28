@@ -193,8 +193,8 @@ def calculate_fees(length, width, height, weight, sales_price=Decimal("0"),
         costs += closing_fee
 
     if is_apparel:
-        costs += 0.40
+        costs += Decimal('0.40')
 
     if not is_pro:
-        costs += 1.0
+        costs += Decimal('1.0')
     return costs.quantize(TWO_PLACES)
