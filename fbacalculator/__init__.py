@@ -1,1 +1,1 @@
-from fbacalculator import calculate_fees
+from .fbacalculator import *
