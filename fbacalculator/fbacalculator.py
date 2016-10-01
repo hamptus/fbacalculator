@@ -53,7 +53,7 @@ def get_cubic_foot(length, width, height):
     return (length * width * height) / Decimal('1728.0')
 
 
-def get_weight_handling(size_tier, outbound, price, is_media=False):
+def get_weight_handling(size_tier, outbound, price=Decimal('0'), is_media=False):
     if price >= 300:
         return Decimal('0')
     outbound = normalize(outbound).quantize(Decimal("0"), rounding=ROUND_UP)
@@ -119,9 +119,9 @@ def calculate_fees(length, width, height, weight, sales_price=Decimal("0"),
         if all(
             [
                 (fee_weight >= weight),
-                (max(length, width, height) <= 15),
-                (min(length, width, height) <= 0.75),
-                (median([length, width, height]) <= 12)
+                (max(length, width, height) <= Decimal('15')),
+                (min(length, width, height) <= Decimal('0.75')),
+                (median([length, width, height]) <= Decimal('12'))
             ]
         ):
             size_tier = "SML_STND"
