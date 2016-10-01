@@ -176,16 +176,16 @@ def calculate_fees(length, width, height, weight, sales_price=Decimal("0"),
 
     # Add the referral fees if we know how much we plan to sell the product for
     if sales_price:
-        referral_fee = sales_price * Decimal('0.15')
+        referral_fee = sales_price * constants.CLOSING_FEES['referral']
         costs += referral_fee.quantize(TWO_PLACES)
 
     if is_media:
-        closing_fee = Decimal('1.35')
-        costs += closing_fee
+        costs += constants.CLOSING_FEES['media']
 
     if is_apparel:
-        costs += Decimal('0.40')
+        costs += constants.CLOSING_FEES['apparel']
 
     if not is_pro:
-        costs += Decimal('1.0')
+        costs += constants.CLOSING_FEES['non-pro']
+
     return costs.quantize(TWO_PLACES)

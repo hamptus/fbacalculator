@@ -19,3 +19,10 @@ CUBIC_FOOT_DIVISOR = Decimal('1728.0')
 
 FEE_WEIGHT = 12.0/16.0
 FEE_WEIGHT_MEDIA = 14.0/16.0
+
+CLOSING_FEES = {
+    'referral': Decimal('0.15'),
+    'media': Decimal('1.35'),
+    'apparel': Decimal('0.40'),
+    'non-pro': Decimal('1.0'),
+}
