@@ -1,5 +1,6 @@
 # fbacalculator
 [![Build Status](https://travis-ci.org/hamptus/fbacalculator.svg?branch=master)](https://travis-ci.org/hamptus/fbacalculator)
+
 This script can be used to calculate FBA fees for Amazon merchants. It should return similar values to:
 https://sellercentral.amazon.com/hz/fba/profitabilitycalculator/index?lang=en_US
 
