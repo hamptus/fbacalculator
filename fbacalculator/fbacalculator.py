@@ -1,26 +1,17 @@
 from decimal import Decimal, ROUND_UP
 from numpy import median
+from . import constants
 
 """ Calculate FBA fees """
 
 TWO_PLACES = Decimal("0.01")
 
-PICK_PACK = {
-    "Standard": Decimal("1.06"),
-    "SML_OVER": Decimal("4.09"),
-    "MED_OVER": Decimal("5.20"),
-    "LRG_OVER": Decimal("8.40"),
-    "SPL_OVER": Decimal("10.53"),
-}
+
+def _30_day(standard_oversize, cubic_foot):
+    return constants.THIRTY_DAY[standard_oversize] * normalize(cubic_foot)
 
 
-def get_30_day(standard_oversize, cubic_foot):
-    if standard_oversize == "Standard":
-        return Decimal('0.5525') * normalize(cubic_foot)
-    return Decimal('0.4325') * normalize(cubic_foot)
-
-
-def get_standard_or_oversize(length, width, height, weight):
+def _standard_or_oversize(length, width, height, weight):
     """ Determine if object is standard size or oversized """
     if any([(weight > 20),
             (max(length, width, height) > 18),
@@ -36,12 +27,12 @@ def normalize(data):
     return data
 
 
-def get_dimensional_weight(length, width, height):
-    dw = (height * length * width) / Decimal('166.0')
+def _dimensional_weight(length, width, height):
+    dw = (height * length * width) / constants.DIMENSIONAL_WEIGHT_DIVISOR
     return Decimal(dw).quantize(TWO_PLACES)
 
 
-def get_girth_and_length(length, width, height):
+def _girth_and_length(length, width, height):
     gl = max(length, width, height) + \
         (median([length, width, height]) * 2) + \
         (min(length, width, height) * 2)
@@ -49,11 +40,11 @@ def get_girth_and_length(length, width, height):
     return Decimal(gl).quantize(Decimal("0.1"))
 
 
-def get_cubic_foot(length, width, height):
-    return (length * width * height) / Decimal('1728.0')
+def _cubic_foot(length, width, height):
+    return (length * width * height) / constants.CUBIC_FOOT_DIVISOR
 
 
-def get_weight_handling(size_tier, outbound, price=Decimal('0'), is_media=False):
+def _weight_handling(size_tier, outbound, price=Decimal('0'), is_media=False):
     if price >= 300:
         return Decimal('0')
     outbound = normalize(outbound).quantize(Decimal("0"), rounding=ROUND_UP)
@@ -103,18 +94,18 @@ def calculate_fees(length, width, height, weight, sales_price=Decimal("0"),
     length, width = normalize(length), normalize(width)
     height, weight = normalize(height), normalize(weight)
 
-    dimensional_weight = get_dimensional_weight(length, width, height)
-    girth_length = get_girth_and_length(length, width, height)
+    dimensional_weight = _dimensional_weight(length, width, height)
+    girth_length = _girth_and_length(length, width, height)
 
-    standard_oversize = get_standard_or_oversize(length, width, height, weight)
+    standard_oversize = _standard_or_oversize(length, width, height, weight)
 
-    cubic_foot = get_cubic_foot(length, width, height)
+    cubic_foot = _cubic_foot(length, width, height)
 
     if standard_oversize == "Standard":
         if is_media:
-            fee_weight = 14/16
+            fee_weight = constants.FEE_WEIGHT_MEDIA
         else:
-            fee_weight = 12/16
+            fee_weight = constants.FEE_WEIGHT
 
         if all(
             [
@@ -171,12 +162,12 @@ def calculate_fees(length, width, height, weight, sales_price=Decimal("0"),
     if sales_price >= 300:
         pick_pack = 0
     else:
-        pick_pack = PICK_PACK.get(standard_oversize, PICK_PACK.get(size_tier))
+        pick_pack = constants.PICK_PACK.get(standard_oversize, constants.PICK_PACK.get(size_tier))
 
-    weight_handling = get_weight_handling(
+    weight_handling = _weight_handling(
         size_tier, outbound, sales_price, is_media).quantize(TWO_PLACES)
 
-    thirty_day = get_30_day(standard_oversize, cubic_foot)
+    thirty_day = _30_day(standard_oversize, cubic_foot)
 
     costs = normalize(pick_pack) + \
         normalize(weight_handling) + \
