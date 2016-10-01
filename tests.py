@@ -50,37 +50,37 @@ class FBACalculatorTests(unittest.TestCase):
         self.assertEqual(fba.get_weight_handling("SML_STND", 0.5), Decimal("0.5"))
 
         # Test LRG_STND
-        self.assertEqual(fba.get_weight_handling("LRG_STND", 0.5), Decimal("0.63"))
-        self.assertEqual(fba.get_weight_handling("LRG_STND", 1.5, True), Decimal("0.88"))
-        self.assertEqual(fba.get_weight_handling("LRG_STND", 2.5, True), Decimal("1.29"))
-        self.assertEqual(fba.get_weight_handling("LRG_STND", 1.5), Decimal("1.59"))
-        self.assertEqual(fba.get_weight_handling("LRG_STND", 2.5), Decimal("1.98"))
+        self.assertEqual(fba.get_weight_handling("LRG_STND", 0.5), Decimal("0.96"))
+        self.assertEqual(fba.get_weight_handling("LRG_STND", 1.5, True), Decimal("1.95"))
+        self.assertEqual(fba.get_weight_handling("LRG_STND", 2.5, True), Decimal("2.34"))
+        self.assertEqual(fba.get_weight_handling("LRG_STND", 1.5), Decimal("1.95"))
+        self.assertEqual(fba.get_weight_handling("LRG_STND", 2.5), Decimal("2.34"))
 
         # Test SPL_OVER
         self.assertEqual(fba.get_weight_handling("SPL_OVER", 80), Decimal("124.58"))
         self.assertEqual(fba.get_weight_handling("SPL_OVER", 100), Decimal("133.78"))
 
         # Test LRG_OVER
-        self.assertEqual(fba.get_weight_handling("LRG_OVER", 80), Decimal("63.09"))
-        self.assertEqual(fba.get_weight_handling("LRG_OVER", 150), Decimal("118.29"))
+        self.assertEqual(fba.get_weight_handling("LRG_OVER", 80), Decimal("63.98"))
+        self.assertEqual(fba.get_weight_handling("LRG_OVER", 150), Decimal("111.98"))
 
         # Test MED_OVER
-        self.assertEqual(fba.get_weight_handling("MED_OVER", 1.5), Decimal("2.23"))
-        self.assertEqual(fba.get_weight_handling("MED_OVER", 2.5), Decimal("2.62"))
+        self.assertEqual(fba.get_weight_handling("MED_OVER", 1.5), Decimal("2.73"))
+        self.assertEqual(fba.get_weight_handling("MED_OVER", 2.5), Decimal("3.12"))
 
         # Test Standard
-        self.assertEqual(fba.get_weight_handling("Standard", 1.5), Decimal("1.59"))
-        self.assertEqual(fba.get_weight_handling("Standard", 2.5), Decimal("1.98"))
+        self.assertEqual(fba.get_weight_handling("Standard", 1.5), Decimal("2.06"))
+        self.assertEqual(fba.get_weight_handling("Standard", 2.5), Decimal("2.45"))
 
     def test_calculate_fees(self):
         """ Make sure calculate_fees returns the expected response """
         self.assertEqual(
-            fba.calculate_fees(7.5, 5.2, 1, 0.45, is_media=True), Decimal("1.68")
+            fba.calculate_fees(5.6, 4.9, 0.4, 0.25, is_media=True), Decimal("2.91")
         )
 
         self.assertEqual(
-            fba.calculate_fees(32.8, 16.5, 7.8, 23.55),
-            Decimal("16.45")
+            fba.calculate_fees(32, 9, 6, 5.05, is_pro=False),
+            Decimal("11.48")
         )
 
 
