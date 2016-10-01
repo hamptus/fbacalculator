@@ -6,11 +6,11 @@ from numpy import median
 TWO_PLACES = Decimal("0.01")
 
 PICK_PACK = {
-    "Standard": Decimal("1.04"),
-    "SML_OVER": Decimal("4.05"),
-    "MED_OVER": Decimal("5.12"),
-    "LRG_OVER": Decimal("8.21"),
-    "SPL_OVER": Decimal("10.34"),
+    "Standard": Decimal("1.06"),
+    "SML_OVER": Decimal("4.09"),
+    "MED_OVER": Decimal("5.20"),
+    "LRG_OVER": Decimal("8.40"),
+    "SPL_OVER": Decimal("10.53"),
 }
 
 
@@ -53,24 +53,28 @@ def get_cubic_foot(length, width, height):
     return (length * width * height) / Decimal('1728.0')
 
 
-def get_weight_handling(size_tier, outbound, is_media=False):
+def get_weight_handling(size_tier, outbound, price, is_media=False):
+    if price >= 300:
+        return Decimal('0')
     outbound = normalize(outbound).quantize(Decimal("0"), rounding=ROUND_UP)
 
     if size_tier == "SML_STND":
         return Decimal('0.5')
 
     if size_tier == "LRG_STND":
-        if outbound <= 1:
-            return Decimal('0.63')
 
         if is_media:
+            if outbound <= 1:
+                return Decimal('0.85')
             if outbound <= 2:
-                return Decimal('0.88')
-            return Decimal('0.88') + (outbound - 2) * Decimal('0.41')
+                return Decimal('1.24')
+            return Decimal('1.24') + (outbound - 2) * Decimal('0.41')
 
+        if outbound <= 1:
+            return Decimal('0.96')
         if outbound <= 2:
-            return Decimal('1.59')
-        return Decimal('1.59') + (outbound - 2) * Decimal('0.39')
+            return Decimal('1.95')
+        return Decimal('1.95') + (outbound - 2) * Decimal('0.39')
 
     if size_tier == "SPL_OVER":
         if outbound <= 90:
@@ -79,17 +83,17 @@ def get_weight_handling(size_tier, outbound, is_media=False):
 
     if size_tier == "LRG_OVER":
         if outbound <= 90:
-            return Decimal("63.09")
-        return Decimal('63.09') + (outbound - 90) * Decimal('0.92')
+            return Decimal("63.98")
+        return Decimal('63.98') + (outbound - 90) * Decimal('0.8')
 
     if size_tier == "MED_OVER":
         if outbound <= 2:
-            return Decimal("2.23")
-        return Decimal('2.23') + (outbound - 2) * Decimal('0.39')
+            return Decimal("2.73")
+        return Decimal('2.73') + (outbound - 2) * Decimal('0.39')
 
     if outbound <= 2:
-        return Decimal('1.59')
-    return Decimal('1.59') + (outbound - 2) * Decimal('0.39')
+        return Decimal('2.06')
+    return Decimal('2.06') + (outbound - 2) * Decimal('0.39')
 
 
 def calculate_fees(length, width, height, weight, sales_price=Decimal("0"),
@@ -163,10 +167,14 @@ def calculate_fees(length, width, height, weight, sales_price=Decimal("0"),
         order_handling = 0
     else:
         order_handling = 1
-    pick_pack = PICK_PACK.get(standard_oversize, PICK_PACK.get(size_tier))
+
+    if sales_price >= 300:
+        pick_pack = 0
+    else:
+        pick_pack = PICK_PACK.get(standard_oversize, PICK_PACK.get(size_tier))
 
     weight_handling = get_weight_handling(
-        size_tier, outbound, is_media).quantize(TWO_PLACES)
+        size_tier, outbound, sales_price, is_media).quantize(TWO_PLACES)
 
     thirty_day = get_30_day(standard_oversize, cubic_foot)
 
@@ -180,9 +188,13 @@ def calculate_fees(length, width, height, weight, sales_price=Decimal("0"),
         referral_fee = sales_price * Decimal('0.15')
         costs += referral_fee.quantize(TWO_PLACES)
 
+    if is_media:
+        closing_fee = Decimal('1.35')
+        costs += closing_fee
+
     if is_apparel:
-        costs += 0.40
+        costs += Decimal('0.40')
 
     if not is_pro:
-        costs += 1.0
+        costs += Decimal('1.0')
     return costs.quantize(TWO_PLACES)
